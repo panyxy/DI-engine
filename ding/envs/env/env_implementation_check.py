@@ -122,7 +122,6 @@ def check_different_memory(array1, array2, step_times) -> None:
 
 
 def check_obs_deepcopy(env: BaseEnv) -> None:
-
     step_times = 0
     print('== 3. Test observation deepcopy')
     obs_1 = env.reset()

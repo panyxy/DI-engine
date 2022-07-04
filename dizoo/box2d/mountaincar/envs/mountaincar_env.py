@@ -1,32 +1,27 @@
-from typing import Any, List, Union, Optional
-import time
+from typing import Optional
 import gym
 import numpy as np
 from ding.envs import BaseEnv, BaseEnvTimestep
-from ding.torch_utils import to_ndarray, to_list
+from ding.torch_utils import to_ndarray
 from ding.utils import ENV_REGISTRY
-from ding.envs.common import affine_transform
-from ding.envs import ObsPlusPrevActRewWrapper
 
 
-@ENV_REGISTRY.register('lunarlander')
-class LunarLanderEnv(BaseEnv):
+@ENV_REGISTRY.register('mountaincar')
+class MountainCarEnv(BaseEnv):
 
     def __init__(self, cfg: dict) -> None:
         self._cfg = cfg
         self._init_flag = False
-        # env_id: LunarLander-v2, LunarLanderContinuous-v2
-        self._env_id = cfg.env_id
-        if 'Continuous' in self._env_id:
-            self._act_scale = cfg.act_scale  # act_scale only works in continous env
-        else:
-            self._act_scale = False
+        self._replay_path = None
+
+    def seed(self, seed: int, dynamic_seed: bool = True) -> None:
+        self._seed = seed
+        self._dynamic_seed = dynamic_seed
+        np.random.seed(self._seed)
 
     def reset(self) -> np.ndarray:
         if not self._init_flag:
-            self._env = gym.make(self._cfg.env_id)
-            if hasattr(self._cfg, 'obs_plus_prev_action_reward') and self._cfg.obs_plus_prev_action_reward:
-                self._env = ObsPlusPrevActRewWrapper(self._env)
+            self._env = gym.make('MountainCar-v0')
             self._observation_space = self._env.observation_space
             self._action_space = self._env.action_space
             self._reward_space = gym.spaces.Box(
@@ -48,36 +43,24 @@ class LunarLanderEnv(BaseEnv):
         self._final_eval_reward = 0
         obs = self._env.reset()
         obs = to_ndarray(obs)
-
         return obs
-
-    def close(self) -> None:
-        if self._init_flag:
-            self._env.close()
-        self._init_flag = False
-
-    def render(self) -> None:
-        self._env.render()
-
-    def seed(self, seed: int, dynamic_seed: bool = True) -> None:
-        self._seed = seed
-        self._dynamic_seed = dynamic_seed
-        np.random.seed(self._seed)
 
     def step(self, action: np.ndarray) -> BaseEnvTimestep:
         assert isinstance(action, np.ndarray), type(action)
         if action.shape == (1, ):
             action = action.item()  # 0-dim array
-        if self._act_scale:
-            action = affine_transform(action, min_val=-1, max_val=1)
         obs, rew, done, info = self._env.step(action)
         self._final_eval_reward += rew
         if done:
             info['final_eval_reward'] = self._final_eval_reward
-
         obs = to_ndarray(obs)
-        rew = to_ndarray([rew]).astype(np.float32)  # wrapped to be transferred to a array with shape (1,)
+        rew = to_ndarray([rew]).astype(np.float32)  # transformed to shape (1, )
         return BaseEnvTimestep(obs, rew, done, info)
+
+    def close(self) -> None:
+        if self._init_flag:
+            self._env.close()
+        self._init_flag = False
 
     def enable_save_replay(self, replay_path: Optional[str] = None) -> None:
         if replay_path is None:
@@ -105,4 +88,4 @@ class LunarLanderEnv(BaseEnv):
         return self._reward_space
 
     def __repr__(self) -> str:
-        return "DI-engine LunarLander Env"
+        return "DI-engine MountainCar Env"
