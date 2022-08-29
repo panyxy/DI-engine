@@ -517,8 +517,8 @@ class PPOPGPolicy(Policy):
                     torch.nn.init.orthogonal_(m.weight)
                     torch.nn.init.zeros_(m.bias)
             if self._action_space == 'continuous':
-                if hasattr(self._model.head, 'log_sigma_param'):
-                    torch.nn.init.constant_(self._model.head.log_sigma_param, -0.5)
+                #if hasattr(self._model.head, 'log_sigma_param'):
+                #    torch.nn.init.constant_(self._model.head.log_sigma_param, -0.5)
                 for m in self._model.modules():
                     if isinstance(m, torch.nn.Linear):
                         torch.nn.init.zeros_(m.bias)
@@ -662,8 +662,9 @@ class PPOPGPolicy(Policy):
         return {i: d for i, d in zip(data_id, output)}
 
     def default_model(self) -> Tuple[str, List[str]]:
+
         if self._cfg.action_space == 'continuous':
-            return 'continuous_bc', ['ding.model.template.bc']
+            return 'pg', ['ding.model.template.pg']
         elif self._cfg.action_space == 'discrete':
             return 'discrete_bc', ['ding.model.template.bc']
 
