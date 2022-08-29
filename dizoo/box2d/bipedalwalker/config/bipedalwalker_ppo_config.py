@@ -16,7 +16,7 @@ bipedalwalker_ppo_config = dict(
     ),
     policy=dict(
         cuda=False,
-        load_path="./bipedalwalker_ppo_seed0/ckpt/ckpt_best.pth.tar",
+        load_path="./bipedalwalker_ppo_seed1/ckpt/ckpt_best.pth.tar",
         action_space='continuous',
         model=dict(
             action_space='continuous',
